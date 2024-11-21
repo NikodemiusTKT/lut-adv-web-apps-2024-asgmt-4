@@ -42,7 +42,7 @@ async function handleFileAccessError(
       (error as Error).message
     }`;
     console.error(errorMessage);
-    throw new Error(errorMessage);
+    throw new Error("Failed to access data file.");
   }
 }
 
@@ -55,7 +55,7 @@ async function createDataFile(filepath: string): Promise<void> {
       (writeError as Error).message
     }`;
     console.error(errorMessage);
-    throw new Error(errorMessage);
+    throw new Error("Failed to create data file.");
   }
 }
 
@@ -67,7 +67,7 @@ async function readDataFile(filepath: string = dataFilePath): Promise<TUser[]> {
     console.error(
       `Failed to read file ${filepath}. Error: ${(error as Error).message}`
     );
-    return []; // Return empty array if file read fails
+    throw new Error("Failed to read data file.");
   }
 }
 
@@ -82,7 +82,7 @@ async function writeDataFile(
     console.error(
       `Failed to write to file ${filepath}. Error: ${(error as Error).message}`
     );
-    throw error; // Re-throw the error after logging it
+    throw new Error("Failed to write to data file.");
   }
 }
 
@@ -105,6 +105,23 @@ router.post("/add", async (req: Request, res: Response) => {
     } else {
       res.status(500).send("Unknown error occurred.");
     }
+  }
+});
+
+router.get("/todos/:name", async (req: Request, res: Response) => {
+  const { name } = req.params;
+  try {
+    const users = await readDataFile(dataFilePath);
+    const user = users.find((user) => user.name === name);
+    if (user) {
+      res.json(user.todos);
+    } else {
+      res.status(404).send("User not found");
+    }
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred.";
+    res.status(500).send(`Error: ${errorMessage}`);
   }
 });
 

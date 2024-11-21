@@ -107,33 +107,46 @@ describe("initializeDataFile", () => {
     await expect(initializeDataFile(invalidFilePath)).rejects.toThrow();
   });
 });
-describe.skip("GET /user", () => {
+describe("GET /todos/:name", () => {
   beforeEach(async () => {
     // Clear the data file before each test
     await fs.promises.writeFile(dataFilePath, JSON.stringify([]));
   });
 
-  it.skip("should return user data if user exists", async () => {
-    const users = [{ name: "Jukka", todos: ["Eat", "Sleep"] }];
-    await fs.promises.writeFile(dataFilePath, JSON.stringify(users));
+  it("should return the todos for an existing user", async () => {
+    const initialData = [{ name: "Jukka", todos: ["Eat", "Sleep"] }];
+    await fs.promises.writeFile(dataFilePath, JSON.stringify(initialData));
 
-    const response = await request(app).get("/user").query({ name: "Jukka" });
+    const response = await request(app).get("/todos/Jukka");
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ name: "Jukka", todos: ["Eat", "Sleep"] });
+    expect(response.body).toEqual(["Eat", "Sleep"]);
   });
 
-  it("should return 404 if user does not exist", async () => {
-    const response = await request(app).get("/user").query({ name: "Matti" });
+  it("should return 404 if the user is not found", async () => {
+    const response = await request(app).get("/todos/NonExistentUser");
 
     expect(response.status).toBe(404);
-    expect(response.text).toBe("User not found.");
+    expect(response.text).toBe("User not found");
   });
 
-  it("should return 400 if name query parameter is missing", async () => {
-    const response = await request(app).get("/user");
+  it("should return 500 if there is an error reading the data file", async () => {
+    jest
+      .spyOn(fs.promises, "readFile")
+      .mockRejectedValueOnce(new Error("Read error"));
 
-    expect(response.status).toBe(400);
-    expect(response.text).toBe("Name query parameter is required.");
+    const response = await request(app).get("/todos/Jukka");
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe("Error: Failed to read data file.");
+  });
+
+  it("should return 500 if there is an unknown error", async () => {
+    jest.spyOn(fs.promises, "readFile").mockRejectedValueOnce("Unknown error");
+
+    const response = await request(app).get("/todos/Jukka");
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe("Error: Failed to read data file.");
   });
 });
