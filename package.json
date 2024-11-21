@@ -5,7 +5,7 @@
   "scripts": {
     "test": "NODE_ENV=test jest",
     "build": "tsc",
-    "start": "tsc-watch --onSuccess \"nodemon dist/server.js\""
+    "start": "tsc-watch --onSuccess \"nodemon dist/app.js\""
   },
   "author": "",
   "license": "MIT",
