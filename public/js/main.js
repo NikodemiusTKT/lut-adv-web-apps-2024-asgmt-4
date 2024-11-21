@@ -28,15 +28,17 @@ async function handleFormSubmit(event) {
       body: JSON.stringify({ name: userInput, todo: todoInput }),
     });
 
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-
     const result = await response.text();
-    document.getElementById("responseMessage").textContent = result;
 
-    // Append the new todo to the list
-    appendTodoItem(userInput, todoInput);
+    if (response.ok) {
+      document.getElementById("responseMessage").textContent = result;
+      // Append the new todo to the list
+      appendTodoItem(userInput, todoInput);
+    } else {
+      document.getElementById(
+        "responseMessage"
+      ).textContent = `Error: ${result}`;
+    }
 
     // Clear the input fields
     document.getElementById("userInput").value = "";
