@@ -4,7 +4,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function init() {
   const todoForm = document.getElementById("todoForm");
+  const searchForm = document.getElementById("searchForm");
   todoForm.addEventListener("submit", handleFormSubmit);
+  searchForm.addEventListener("submit", handleSearchTodos);
 }
 
 async function handleFormSubmit(event) {
@@ -14,44 +16,91 @@ async function handleFormSubmit(event) {
   const todoInput = document.getElementById("todoInput").value.trim();
 
   if (!userInput || !todoInput) {
-    document.getElementById("responseMessage").textContent =
-      "Both fields are required.";
+    displayMessage("Both fields are required.", "red lighten-4");
     return;
   }
 
   try {
-    const response = await fetch("/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name: userInput, todo: todoInput }),
-    });
-
+    const response = await addTodo(userInput, todoInput);
     const result = await response.text();
-    const responseMessage = document.getElementById("responseMessage");
     if (response.ok) {
-      responseMessage.className = "card-panel teal lighten-4 center-align";
-      responseMessage.innerText = result;
-      // Append the new todo to the list
-      appendTodoItem(userInput, todoInput);
+      displayMessage(result, "teal lighten-4");
+      const todos = await fetchTodos(userInput);
+      displayTodos(todos.data);
     } else {
-      responseMessage.className = "card-panel red lighten-4 center-align";
-      responseMessage.innerText = `Error: ${result}`;
+      displayMessage(`Error: ${result}`, "red lighten-4");
     }
-    responseMessage.hidden = false;
-
-    // Clear the input fields
-    document.getElementById("userInput").value = "";
-    document.getElementById("todoInput").value = "";
+    clearInputFields(["userInput", "todoInput"]);
   } catch (error) {
-    const responseMessage = document.getElementById("responseMessage");
-    responseMessage.className = "card-panel red lighten-4 center-align";
-    responseMessage.innerText = `Error: ${error.message}`;
+    displayMessage(`Error: ${error.message}`, "red lighten-4");
   }
 }
 
-function appendTodoItem(user, todo) {
+async function handleSearchTodos(event) {
+  event.preventDefault();
+
+  const userInput = document.getElementById("searchInput").value.trim();
+
+  if (!userInput) {
+    displayMessage("User is required.", "red lighten-4");
+    return;
+  }
+
+  await updateTodoList(userInput);
+  clearInputFields(["searchInput"]);
+}
+
+async function addTodo(user, todo) {
+  return fetch("/add", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: user, todo: todo }),
+  });
+}
+
+async function fetchTodos(user) {
+  try {
+    const response = await fetch(`/todos/${user}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      return { success: true, data: result };
+    } else {
+      const result = await response.text();
+      return { success: false, message: result };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: `Unable to fetch todos: ${error.message}`,
+    };
+  }
+}
+
+async function updateTodoList(user) {
+  const result = await fetchTodos(user);
+  if (result.success) {
+    displayMessage(`Todos found for user ${user}`, "teal lighten-4");
+    displayTodos(result.data);
+  } else {
+    displayMessage(result.message, "red lighten-4");
+  }
+}
+
+function displayTodos(todos) {
+  const todoList = document.getElementById("todoList");
+  todoList.innerHTML = ""; // Clear previous results
+  todos.forEach(appendTodoItem);
+}
+
+function appendTodoItem(todo) {
   const todoList = document.getElementById("todoList");
   const newTodoItem = document.createElement("li");
   const span = document.createElement("span");
@@ -59,7 +108,20 @@ function appendTodoItem(user, todo) {
   span.className = "secondary-content";
   span.innerHTML = `<i class="material-icons">task_alt</i>`;
   newTodoItem.className = "collection-item";
-  newTodoItem.textContent = `${user}: ${todo}`;
+  newTodoItem.textContent = `${todo}`;
   newTodoItem.appendChild(span);
   todoList.appendChild(newTodoItem);
+}
+
+function displayMessage(message, colorClass) {
+  const responseMessage = document.getElementById("responseMessage");
+  responseMessage.className = `card-panel ${colorClass} center-align`;
+  responseMessage.innerText = message;
+  responseMessage.hidden = false;
+}
+
+function clearInputFields(fieldIds) {
+  fieldIds.forEach((id) => {
+    document.getElementById(id).value = "";
+  });
 }
