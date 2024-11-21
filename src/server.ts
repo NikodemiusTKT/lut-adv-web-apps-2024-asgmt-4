@@ -125,4 +125,23 @@ router.get("/todos/:name", async (req: Request, res: Response) => {
   }
 });
 
+router.delete("/delete", async (req: Request, res: Response) => {
+  const { name }: { name: string } = req.body;
+  try {
+    let users = await readDataFile(dataFilePath);
+    const userIndex = users.findIndex((user) => user.name === name);
+    if (userIndex !== -1) {
+      users.splice(userIndex, 1);
+      await writeDataFile(dataFilePath, users);
+      res.send("User deleted successfully.");
+    } else {
+      res.status(404).send("User not found");
+    }
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred.";
+    res.status(500).send(`Error: ${errorMessage}`);
+  }
+});
+
 export { router, initializeDataFile, dataFilePath };
