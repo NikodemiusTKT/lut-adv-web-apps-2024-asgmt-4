@@ -3,30 +3,93 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <!-- Compiled and minified CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.1.0/dist/css/materialize.min.css"
-    />
-    <!-- Compiled and minified JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.1.0/dist/js/materialize.min.js"></script>
-
+    <title>Todo List</title>
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
+    <!-- Compiled and minified CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
 
-    <script src="js/main.js" defer></script>
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
     <link rel="stylesheet" type="text/css" href="index.css" />
   </head>
   <body>
-    <div id="main-canvas">
-      <header></header>
+    <header>
+      <nav>
+        <div class="nav-wrapper">
+          <a href="#" class="brand-logo center">Todo List</a>
+        </div>
+      </nav>
+    </header>
 
-      <main class="container"></main>
+    <main>
+      <div class="container">
+        <section class="section">
+          <div class="row">
+            <form id="todoForm" class="col s12">
+              <div class="row">
+                <div class="input-field col s12 m6">
+                  <i class="material-icons prefix">account_circle</i>
+                  <input id="userInput" type="text" class="validate" required />
+                  <label for="userInput">Your Name</label>
+                </div>
+                <div class="input-field col s12 m6">
+                  <i class="material-icons prefix">task_alt</i>
+                  <input id="todoInput" type="text" class="validate" required />
+                  <label for="todoInput">Your Todo</label>
+                </div>
+              </div>
+              <div class="row center-align">
+                <button
+                  class="btn waves-effect waves-light"
+                  type="submit"
+                  id="submit-data"
+                >
+                  Add Todo
+                  <i class="material-icons right">add_task</i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
 
-      <footer class="">Copyright</footer>
-    </div>
+        <section class="section">
+          <div class="row">
+            <div class="col s12">
+              <ul id="todoList" class="collection with-header">
+                <li class="collection-header center-align">
+                  <h5>Todos</h5>
+                </li>
+                <!-- Todo items will be appended here -->
+                <li class="collection-item">
+                  todo 1
+                  <span class="secondary-content"
+                    ><i class="material-icons">task_alt</i></span
+                  >
+                </li>
+                <li class="collection-item">todo 2</li>
+              </ul>
+            </div>
+          </div>
+          <p id="responseMessage" class="center-align">responseMessage</p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="page-footer">
+      <div class="container">
+        <div class="row">
+          <div class="col s12 center-align">© 2024 Copyright</div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
   </body>
 </html>
