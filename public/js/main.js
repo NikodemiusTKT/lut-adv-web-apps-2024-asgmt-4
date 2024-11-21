@@ -7,6 +7,9 @@ function init() {
   const searchForm = document.getElementById("searchForm");
   todoForm.addEventListener("submit", handleFormSubmit);
   searchForm.addEventListener("submit", handleSearchTodos);
+  document
+    .getElementById("deleteUser")
+    .addEventListener("click", handleDeleteUser);
 }
 
 async function handleFormSubmit(event) {
@@ -27,6 +30,7 @@ async function handleFormSubmit(event) {
       displayMessage(result, "teal lighten-4");
       const todos = await fetchTodos(userInput);
       displayTodos(todos.data);
+      showCurrentUserSection(userInput);
     } else {
       displayMessage(`Error: ${result}`, "red lighten-4");
     }
@@ -89,15 +93,11 @@ async function updateTodoList(user) {
   if (result.success) {
     displayMessage(`Todos found for user ${user}`, "teal lighten-4");
     displayTodos(result.data);
+    showCurrentUserSection(user);
   } else {
     displayMessage(result.message, "red lighten-4");
+    hideCurrentUserSection();
   }
-}
-
-function displayTodos(todos) {
-  const todoList = document.getElementById("todoList");
-  todoList.innerHTML = ""; // Clear previous results
-  todos.forEach(appendTodoItem);
 }
 
 function appendTodoItem(todo) {
@@ -113,6 +113,12 @@ function appendTodoItem(todo) {
   todoList.appendChild(newTodoItem);
 }
 
+function displayTodos(todos) {
+  const todoList = document.getElementById("todoList");
+  todoList.innerHTML = ""; // Clear previous results
+  todos.forEach((todo) => appendTodoItem(todo));
+}
+
 function displayMessage(message, colorClass) {
   const responseMessage = document.getElementById("responseMessage");
   responseMessage.className = `card-panel ${colorClass} center-align`;
@@ -124,4 +130,38 @@ function clearInputFields(fieldIds) {
   fieldIds.forEach((id) => {
     document.getElementById(id).value = "";
   });
+}
+async function handleDeleteUser() {
+  const user = document.getElementById("currentUser").innerText;
+  try {
+    const response = await fetch("/delete", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: user }),
+    });
+
+    const result = await response.text();
+    if (response.ok) {
+      displayMessage(result, "teal lighten-4");
+      hideCurrentUserSection();
+      document.getElementById("todoList").innerHTML = ""; // Clear the todo list
+    } else {
+      displayMessage(`${result}`, "red lighten-4");
+    }
+  } catch (error) {
+    displayMessage(`Error: ${error.message}`, "red lighten-4");
+  }
+}
+function showCurrentUserSection(user) {
+  const currentUserSection = document.getElementById("currentUserSection");
+  const currentUser = document.getElementById("currentUser");
+  currentUser.innerText = user;
+  currentUserSection.hidden = false;
+}
+
+function hideCurrentUserSection() {
+  const currentUserSection = document.getElementById("currentUserSection");
+  currentUserSection.hidden = true;
 }
