@@ -29,24 +29,25 @@ async function handleFormSubmit(event) {
     });
 
     const result = await response.text();
-
+    const responseMessage = document.getElementById("responseMessage");
     if (response.ok) {
-      document.getElementById("responseMessage").textContent = result;
+      responseMessage.className = "card-panel teal lighten-4 center-align";
+      responseMessage.innerText = result;
       // Append the new todo to the list
       appendTodoItem(userInput, todoInput);
     } else {
-      document.getElementById(
-        "responseMessage"
-      ).textContent = `Error: ${result}`;
+      responseMessage.className = "card-panel red lighten-4 center-align";
+      responseMessage.innerText = `Error: ${result}`;
     }
+    responseMessage.hidden = false;
 
     // Clear the input fields
     document.getElementById("userInput").value = "";
     document.getElementById("todoInput").value = "";
   } catch (error) {
-    document.getElementById(
-      "responseMessage"
-    ).textContent = `Error: ${error.message}`;
+    const responseMessage = document.getElementById("responseMessage");
+    responseMessage.className = "card-panel red lighten-4 center-align";
+    responseMessage.innerText = `Error: ${error.message}`;
   }
 }
 
