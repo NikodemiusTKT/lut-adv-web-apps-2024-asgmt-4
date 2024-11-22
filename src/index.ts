@@ -118,39 +118,33 @@ async function writeDataFile(
     throw new WriteDataFileError();
   }
 }
-
-router.post(
-  "/add",
-  asyncHandler(async (req: Request, res: Response) => {
-    const { name, todo }: { name: string; todo: string } = req.body;
-    const decodedName = decodeURIComponent(name);
-    const decodedTodo = decodeURIComponent(todo);
-    const users = await readDataFile(dataFilePath);
-    let user: TUser | undefined = users.find(
-      (user) => user.name === decodedName
-    );
-    if (user) {
-      user.todos.push(decodedTodo);
-    } else {
-      user = { name: decodedName, todos: [decodedTodo] };
-      users.push(user);
-    }
-    await writeDataFile(dataFilePath, users);
-    res.send(`Todo added successfully for user ${name}.`);
-  })
-);
-
 router.get(
   "/todos/:id",
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const users = await readDataFile(dataFilePath);
+    const users: TUser[] = await readDataFile(dataFilePath);
     const user = users.find((user) => user.name === id);
     if (user) {
       res.json(user.todos);
     } else {
-      throw new UserNotFoundError();
+      res.status(404).send("User not found");
     }
+  })
+);
+router.post(
+  "/add",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { name, todo }: { name: string; todo: string } = req.body;
+    const users = await readDataFile(dataFilePath);
+    let user: TUser | undefined = users.find((user) => user.name === name);
+    if (user) {
+      user.todos.push(todo);
+    } else {
+      user = { name: name, todos: [todo] };
+      users.push(user);
+    }
+    await writeDataFile(dataFilePath, users);
+    res.send(`Todo added successfully for user ${name}.`);
   })
 );
 
