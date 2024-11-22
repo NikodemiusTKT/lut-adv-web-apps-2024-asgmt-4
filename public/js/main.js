@@ -133,8 +133,8 @@ const handleDeleteTodo = async (event) => {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      name: decodeURIComponent(currentUser),
-      todo: decodeURIComponent(todo),
+      name: currentUser,
+      todo: todo,
     }),
   });
 
