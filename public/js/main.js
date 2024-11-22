@@ -17,6 +17,9 @@ const init = () => {
   document
     .getElementById("deleteUser")
     .addEventListener("click", handleDeleteUser);
+  document
+    .getElementById("search")
+    .addEventListener("click", handleSearchTodos);
 };
 
 const apiRequest = async (url, options) => {
