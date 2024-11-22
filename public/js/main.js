@@ -55,7 +55,6 @@ async function handleAddTodos(event) {
     displaySuccessMessage(result.data);
     currentUser = userInput;
     await fetchAndDisplayTodos(userInput);
-    showCurrentUserSection(userInput);
   } else {
     handleError(result.message, displayErrorMsg);
   }
@@ -85,13 +84,7 @@ async function handleDeleteUser() {
     displayErrorMsg("No user selected.");
     return;
   }
-  const result = await apiRequest("/delete", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name: encodeURIComponent(currentUser) }),
-  });
+  const result = await deleteUser(currentUser);
   if (result.success) {
     displaySuccessMessage(result.data);
     document.getElementById("todoList").innerHTML = ""; // Clear the todo list
@@ -123,6 +116,16 @@ async function fetchTodos(user) {
   return result;
 }
 
+async function deleteUser(user) {
+  return apiRequest("/delete", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: encodeURIComponent(user) }),
+  });
+}
+
 async function fetchAndDisplayTodos(user) {
   const result = await fetchTodos(user);
   if (result.success) {
@@ -135,14 +138,36 @@ async function fetchAndDisplayTodos(user) {
   }
   return result;
 }
+async function handleDeleteTodo(event) {
+  const todoIndex = event.target.dataset.index;
+  const todoText = event.target.dataset.todo;
 
-function renderTodoItem(todo) {
+  const result = await apiRequest("/update", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: encodeURIComponent(currentUser),
+      todo: encodeURIComponent(todoText),
+    }),
+  });
+
+  if (result.success) {
+    displaySuccessMessage(result.data);
+    await fetchAndDisplayTodos(currentUser);
+  } else {
+    handleError(result.message, displayErrorMsg);
+  }
+}
+function renderTodoItem(todo, index) {
   const todoList = document.getElementById("todoList");
   const newTodoItem = document.createElement("li");
-  const span = document.createElement("span");
+  const span = document.createElement("a");
+  span.href = "#!";
 
-  span.className = "secondary-content";
-  span.innerHTML = `<i class="material-icons">task_alt</i>`;
+  span.className = "secondary-content link";
+  span.innerHTML = `<i class="material-icons delete-task" data-index="${index}" data-todo="${todo}">delete</i>`;
   newTodoItem.className = "collection-item";
   newTodoItem.textContent = `${todo}`;
   newTodoItem.appendChild(span);
@@ -152,7 +177,12 @@ function renderTodoItem(todo) {
 function renderTodos(todos) {
   const todoList = document.getElementById("todoList");
   todoList.innerHTML = ""; // Clear previous results
-  todos.forEach((todo) => renderTodoItem(todo));
+  todos.forEach((todo, index) => renderTodoItem(todo, index));
+
+  const deleteTaskElements = document.querySelectorAll(".delete-task");
+  deleteTaskElements.forEach((element) =>
+    element.addEventListener("click", handleDeleteTodo)
+  );
 }
 
 function displayMessage(message, colorClass) {
