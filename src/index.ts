@@ -141,11 +141,11 @@ router.post(
 );
 
 router.get(
-  "/todos/:name",
+  "/todos/:id",
   asyncHandler(async (req: Request, res: Response) => {
-    const { name } = req.params;
+    const { id } = req.params;
     const users = await readDataFile(dataFilePath);
-    const user = users.find((user) => user.name === name);
+    const user = users.find((user) => user.name === id);
     if (user) {
       res.json(user.todos);
     } else {
