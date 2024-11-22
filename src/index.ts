@@ -122,10 +122,13 @@ router.get(
   "/todos/:id",
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const users: TUser[] = await readDataFile(dataFilePath);
-    const user = users.find((user) => user.name === id);
+    const data = await fs.promises.readFile(dataFilePath, "utf-8");
+    const users: TUser[] = JSON.parse(data);
+    const user = users.find(
+      (user) => user.name.toLowerCase() === id.toLowerCase()
+    );
     if (user) {
-      res.json(user.todos);
+      res.send(user.todos);
     } else {
       res.status(404).send("User not found");
     }

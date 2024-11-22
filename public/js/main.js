@@ -92,8 +92,8 @@ const addTodo = (user, todo) =>
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      name: encodeURIComponent(user),
-      todo: encodeURIComponent(todo),
+      name: user,
+      todo: todo,
     }),
   });
 
