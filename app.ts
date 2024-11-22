@@ -10,10 +10,10 @@ import morgan from "morgan";
 import path from "path";
 
 const app: Express = express();
-const port = 8000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 app.use(express.static(path.join(__dirname, "../public")));
@@ -25,8 +25,8 @@ let server: any;
 initializeDataFile(dataFilePath)
   .then(() => {
     console.log("Data file initialized successfully.");
-    server = app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+    server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
   })
   .catch((error) => {

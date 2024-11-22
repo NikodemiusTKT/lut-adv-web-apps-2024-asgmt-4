@@ -144,12 +144,11 @@ router.post(
 );
 
 router.get(
-  "/todos/:id",
+  "/todos/:name",
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const decodedId = decodeURIComponent(id);
+    const { name } = req.params;
     const users = await readDataFile(dataFilePath);
-    const user = users.find((user) => user.name === decodedId);
+    const user = users.find((user) => user.name === name);
     if (user) {
       res.json(user.todos);
     } else {
@@ -162,9 +161,8 @@ router.delete(
   "/delete",
   asyncHandler(async (req: Request, res: Response) => {
     const { name }: { name: string } = req.body;
-    const decodedName = decodeURIComponent(name);
     let users = await readDataFile(dataFilePath);
-    const userIndex = users.findIndex((user) => user.name === decodedName);
+    const userIndex = users.findIndex((user) => user.name === name);
     if (userIndex !== -1) {
       users.splice(userIndex, 1);
       await writeDataFile(dataFilePath, users);
@@ -175,4 +173,26 @@ router.delete(
   })
 );
 
+router.put(
+  "/update",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { name, todo }: { name: string; todo: string } = req.body;
+    const decodedName = decodeURIComponent(name);
+    const decodedTodo = decodeURIComponent(todo);
+    const users = await readDataFile(dataFilePath);
+    const user = users.find((user) => user.name === decodedName);
+    if (user) {
+      const todoIndex = user.todos.indexOf(decodedTodo);
+      if (todoIndex !== -1) {
+        user.todos.splice(todoIndex, 1);
+        await writeDataFile(dataFilePath, users);
+        res.send("Todo deleted successfully.");
+      } else {
+        throw new BadRequestError("Todo not found.");
+      }
+    } else {
+      throw new UserNotFoundError();
+    }
+  })
+);
 export { router, initializeDataFile, dataFilePath, errorHandler };

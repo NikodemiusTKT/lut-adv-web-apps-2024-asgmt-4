@@ -1,46 +1,42 @@
-document.addEventListener("DOMContentLoaded", function () {
-  init();
-});
+document.addEventListener("DOMContentLoaded", () => init());
 
 let currentUser = null;
 
-function handleError(error, displayFunction) {
+const handleError = (error, displayFunction) => {
   const errorMessage = error instanceof Error ? error.message : error;
   displayFunction(errorMessage);
-}
+};
 
-function init() {
-  const todoForm = document.getElementById("todoForm");
-  const searchForm = document.getElementById("searchForm");
-  todoForm.addEventListener("submit", handleAddTodos);
-  searchForm.addEventListener("submit", handleSearchTodos);
+const init = () => {
+  document
+    .getElementById("todoForm")
+    .addEventListener("submit", handleAddTodos);
+  document
+    .getElementById("searchForm")
+    .addEventListener("submit", handleSearchTodos);
   document
     .getElementById("deleteUser")
     .addEventListener("click", handleDeleteUser);
-}
-async function apiRequest(url, options) {
+};
+
+const apiRequest = async (url, options) => {
   try {
     const response = await fetch(url, options);
     const contentType = response.headers.get("content-type");
-    let result;
-    if (contentType && contentType.includes("application/json")) {
-      result = await response.json();
-    } else {
-      result = await response.text();
-    }
-    if (response.ok) {
-      return { success: true, data: result };
-    } else {
-      return { success: false, message: result.message || result };
-    }
+    const result =
+      contentType && contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
+    return response.ok
+      ? { success: true, data: result }
+      : { success: false, message: result.message || result };
   } catch (error) {
     return { success: false, message: error.message };
   }
-}
+};
 
-async function handleAddTodos(event) {
+const handleAddTodos = async (event) => {
   event.preventDefault();
-
   const userInput = document.getElementById("userInput").value.trim();
   const todoInput = document.getElementById("todoInput").value;
 
@@ -50,23 +46,21 @@ async function handleAddTodos(event) {
   }
 
   const result = await addTodo(userInput, todoInput);
-
   if (result.success) {
     displaySuccessMessage(result.data);
     currentUser = userInput;
-    await fetchAndDisplayTodos(userInput);
+    await fetchAndDisplayTodos(currentUser);
   } else {
     handleError(result.message, displayErrorMsg);
   }
   clearInputFields(["todoInput"]);
-}
+};
 
-async function handleSearchTodos(event) {
+const handleSearchTodos = async (event) => {
   event.preventDefault();
-
   const searchInput = document.getElementById("searchInput").value.trim();
 
-  if (!userInput) {
+  if (!searchInput) {
     displayErrorMsg("User is required.");
     return;
   }
@@ -74,12 +68,11 @@ async function handleSearchTodos(event) {
   currentUser = searchInput;
   document.getElementById("userInput").value = currentUser;
   const result = await fetchAndDisplayTodos(currentUser);
-  if (result.success) {
-    displaySuccessMessage(`Todos fetched successfully for ${currentUser}.`);
-  }
+  if (result) displaySuccessMessage("User found.");
   clearInputFields(["searchInput"]);
-}
-async function handleDeleteUser() {
+};
+
+const handleDeleteUser = async () => {
   if (!currentUser) {
     displayErrorMsg("No user selected.");
     return;
@@ -87,136 +80,106 @@ async function handleDeleteUser() {
   const result = await deleteUser(currentUser);
   if (result.success) {
     displaySuccessMessage(result.data);
-    document.getElementById("todoList").innerHTML = ""; // Clear the todo list
+    document.getElementById("todoList").innerHTML = "";
     hideCurrentUserSection();
   } else {
     handleError(result.message, displayErrorMsg);
   }
-}
-async function addTodo(user, todo) {
-  return apiRequest("/add", {
+};
+
+const addTodo = (user, todo) =>
+  apiRequest("/add", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name: encodeURIComponent(user),
       todo: encodeURIComponent(todo),
     }),
   });
-}
 
-async function fetchTodos(user) {
-  const result = await apiRequest(`/todos/${encodeURIComponent(user)}`, {
+const fetchTodos = (user) =>
+  apiRequest(`/todos/${user}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
   });
-  return result;
-}
 
-async function deleteUser(user) {
-  return apiRequest("/delete", {
+const deleteUser = (user) =>
+  apiRequest("/delete", {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name: encodeURIComponent(user) }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: user }),
   });
-}
 
-async function fetchAndDisplayTodos(user) {
+const fetchAndDisplayTodos = async (user) => {
   const result = await fetchTodos(user);
   if (result.success) {
     renderTodos(result.data);
     showCurrentUserSection(user);
+    return true;
   } else {
-    displayErrorMsg(result.message);
-    document.getElementById("todoList").innerHTML = ""; // Clear the todo list
+    handleError(result.message, displayErrorMsg);
+    document.getElementById("todoList").innerHTML = "";
     hideCurrentUserSection();
+    return false;
   }
-  return result;
-}
-async function handleDeleteTodo(event) {
-  const todoIndex = event.target.dataset.index;
-  const todoText = event.target.dataset.todo;
+};
 
+const handleDeleteTodo = async (event) => {
+  const { index, todo } = event.target.dataset;
   const result = await apiRequest("/update", {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      name: encodeURIComponent(currentUser),
-      todo: encodeURIComponent(todoText),
+      name: decodeURIComponent(currentUser),
+      todo: decodeURIComponent(todo),
     }),
   });
 
   if (result.success) {
     displaySuccessMessage(result.data);
-    await fetchAndDisplayTodos(currentUser);
+    event.target.closest("li").remove();
   } else {
     handleError(result.message, displayErrorMsg);
   }
-}
-function renderTodoItem(todo, index) {
+};
+
+const renderTodoItem = (todo, index) => {
   const todoList = document.getElementById("todoList");
   const newTodoItem = document.createElement("li");
-  const span = document.createElement("a");
-  span.href = "#!";
-
-  span.className = "secondary-content link";
-  span.innerHTML = `<i class="material-icons delete-task" data-index="${index}" data-todo="${todo}">delete</i>`;
   newTodoItem.className = "collection-item";
-  newTodoItem.textContent = `${todo}`;
-  newTodoItem.appendChild(span);
+  newTodoItem.innerHTML = `${todo} <a href="#!" class="secondary-content link"><i class="material-icons delete-task" data-index="${index}" data-todo="${todo}">delete</i></a>`;
+  newTodoItem.addEventListener("click", handleDeleteTodo);
   todoList.appendChild(newTodoItem);
-}
+};
 
-function renderTodos(todos) {
+const renderTodos = (todos) => {
   const todoList = document.getElementById("todoList");
-  todoList.innerHTML = ""; // Clear previous results
+  todoList.innerHTML = "";
   todos.forEach((todo, index) => renderTodoItem(todo, index));
+};
 
-  const deleteTaskElements = document.querySelectorAll(".delete-task");
-  deleteTaskElements.forEach((element) =>
-    element.addEventListener("click", handleDeleteTodo)
-  );
-}
-
-function displayMessage(message, colorClass) {
+const displayMessage = (message, colorClass) => {
   const responseMessage = document.getElementById("responseMessage");
   responseMessage.className = `card-panel ${colorClass} center-align`;
   responseMessage.innerText = message;
   responseMessage.hidden = false;
-}
+};
 
-function clearInputFields(fieldIds) {
-  fieldIds.forEach((id) => {
-    document.getElementById(id).value = "";
-  });
-}
+const clearInputFields = (fieldIds) => {
+  fieldIds.forEach((id) => (document.getElementById(id).value = ""));
+};
 
-function showCurrentUserSection(user) {
-  console.log(user);
-  currentUser = user; // Save the current user
-  const currentUserSection = document.getElementById("currentUserSection");
-  const currentUserElement = document.getElementById("currentUserElement");
-  currentUserElement.innerText = user;
-  currentUserSection.hidden = false;
-}
+const showCurrentUserSection = (user) => {
+  currentUser = user;
+  document.getElementById("currentUserElement").innerText = user;
+  document.getElementById("currentUserSection").hidden = false;
+};
 
-function hideCurrentUserSection() {
-  currentUser = ""; // Clear the current user
-  const currentUserSection = document.getElementById("currentUserSection");
-  currentUserSection.hidden = true;
-}
+const hideCurrentUserSection = () => {
+  currentUser = "";
+  document.getElementById("currentUserSection").hidden = true;
+};
 
-function displayErrorMsg(message) {
-  displayMessage(message, "red lighten-4");
-}
-
-function displaySuccessMessage(message) {
+const displayErrorMsg = (message) => displayMessage(message, "red lighten-4");
+const displaySuccessMessage = (message) =>
   displayMessage(message, "teal lighten-4");
-}
