@@ -28,7 +28,7 @@
       </div>
     </section>
     <!-- Current user and delete button section -->
-
+    <section id="currentUserSection" class="section" hidden></section>
     <div class="row">
       <div class="col s12">
         <h5 id="currentUserElement" class="center-align">Current User:</h5>
@@ -42,77 +42,77 @@
         </button>
       </div>
     </div>
-
+    </section>
 
     <!-- Search todo section -->
-
-    <div class="row">
-      <div class="col s12">
-        <form id="searchForm">
-          <div class="row valign-wrapper">
-            <div class="input-field col s10">
-              <i class="material-icons prefix">search</i>
-              <input id="searchInput" type="text" />
-              <label for="searchInput">Search User Todos</label>
-            </div>
-            <div class="input-field col s2">
-              <button class="btn waves-effect waves-light" type="submit" id="search">
-                Search
-                <i class="material-icons right">search</i>
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Add todo section -->
-
-    <div class="row">
-      <div class="col s12">
-        <form id="todoForm">
-          <div class="row valign-wrapper">
-            <div class="input-field col s5">
-              <i class="material-icons prefix">account_circle</i>
-              <input id="userInput" type="text" class="validate" />
-              <label for="userInput">Your Name</label>
-            </div>
-            <div class="input-field col s5">
-              <i class="material-icons prefix">task_alt</i>
-              <input id="todoInput" type="text" class="validate" />
-              <label for="todoInput">Your Todo</label>
-            </div>
-            <div class="col s2">
-              <button class="btn waves-effect waves-light" type="submit" id="submit-data">
-                Add Todo
-                <i class="material-icons right">add_task</i>
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-
-
-
-    <div class="row">
-      <div class="col s12">
-        <ul id="todoList" class="collection">
-          <!-- Todo items will be appended here -->
-        </ul>
-      </div>
-    </div>
-
-  </div>
-
-
-  <footer class="page-footer">
-    <div class="container">
+    <section>
       <div class="row">
-        <div class="col s12 center-align">© 2024 Copyright</div>
+        <div class="col s12">
+          <form id="searchForm">
+            <div class="row valign-wrapper">
+              <div class="input-field col s10">
+                <i class="material-icons prefix">search</i>
+                <input id="searchInput" type="text" />
+                <label for="searchInput">Search User Todos</label>
+              </div>
+              <div class="input-field col s2">
+                <button class="btn waves-effect waves-light" type="submit" id="search">
+                  Search
+                  <i class="material-icons right">search</i>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  </footer>
+    </section>
+    <!-- Add todo section -->
+    <section>
+      <div class="row">
+        <div class="col s12">
+          <form id="todoForm">
+            <div class="row valign-wrapper">
+              <div class="input-field col s5">
+                <i class="material-icons prefix">account_circle</i>
+                <input id="userInput" type="text" class="validate" />
+                <label for="userInput">Your Name</label>
+              </div>
+              <div class="input-field col s5">
+                <i class="material-icons prefix">task_alt</i>
+                <input id="todoInput" type="text" class="validate" />
+                <label for="todoInput">Your Todo</label>
+              </div>
+              <div class="col s2">
+                <button class="btn waves-effect waves-light" type="submit" id="submit-data">
+                  Add Todo
+                  <i class="material-icons right">add_task</i>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="row">
+        <div class="col s12">
+          <ul id="todoList" class="collection">
+            <!-- Todo items will be appended here -->
+          </ul>
+        </div>
+      </div>
+    </section>
+
+
+    <footer class="page-footer">
+      <div class="container">
+        <div class="row">
+          <div class="col s12 center-align">© 2024 Copyright</div>
+        </div>
+      </div>
+    </footer>
+  </div>
 
   <script src="js/main.js"></script>
 </body>
