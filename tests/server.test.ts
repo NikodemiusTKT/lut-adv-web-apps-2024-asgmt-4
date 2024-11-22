@@ -1,5 +1,5 @@
 import { app, server } from "../app";
-import { dataFilePath, initializeDataFile } from "../src/server";
+import { dataFilePath, initializeDataFile } from "../src/index";
 import express, { Request, Response } from "express";
 
 import fs from "fs";
@@ -108,6 +108,7 @@ describe("initializeDataFile", () => {
   });
 });
 describe("GET /todos/:name", () => {
+  const dataFilePath = path.resolve(__dirname, "../../test_data.json");
   beforeEach(async () => {
     // Clear the data file before each test
     await fs.promises.writeFile(dataFilePath, JSON.stringify([]));
@@ -138,7 +139,7 @@ describe("GET /todos/:name", () => {
     const response = await request(app).get("/todos/Jukka");
 
     expect(response.status).toBe(500);
-    expect(response.text).toBe("Error: Failed to read data file.");
+    expect(response.text).toBe("Failed to read data file.");
   });
 
   it("should return 500 if there is an unknown error", async () => {
@@ -147,6 +148,101 @@ describe("GET /todos/:name", () => {
     const response = await request(app).get("/todos/Jukka");
 
     expect(response.status).toBe(500);
-    expect(response.text).toBe("Error: Failed to read data file.");
+    expect(response.text).toBe("Failed to read data file.");
+  });
+});
+
+describe("DELETE /delete", () => {
+  beforeEach(async () => {
+    await fs.promises.writeFile(dataFilePath, JSON.stringify([]));
+  });
+
+  it("should delete the user", async () => {
+    const initialData = [{ name: "Jukka", todos: ["Eat", "Sleep"] }];
+    await fs.promises.writeFile(dataFilePath, JSON.stringify(initialData));
+
+    const response = await request(app)
+      .delete("/delete")
+      .send({ name: "Jukka" });
+
+    expect(response.status).toBe(200);
+    expect(response.text).toBe("User deleted successfully.");
+  });
+
+  it("should return 404 if the user is not found", async () => {
+    const response = await request(app)
+      .delete("/delete")
+      .send({ name: "NonExistentUser" });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe("User not found");
+  });
+
+  it("should return 500 if there is an error reading the data file", async () => {
+    jest
+      .spyOn(fs.promises, "readFile")
+      .mockRejectedValueOnce(new Error("Read error"));
+
+    const response = await request(app)
+      .delete("/delete")
+      .send({ name: "Jukka" });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe("Failed to read data file.");
+  });
+
+  it("should return 500 if there is an error writing the data file", async () => {
+    const initialData = [{ name: "Jukka", todos: ["Eat", "Sleep"] }];
+    await fs.promises.writeFile(dataFilePath, JSON.stringify(initialData));
+    jest
+      .spyOn(fs.promises, "writeFile")
+      .mockRejectedValueOnce(new Error("Write error"));
+
+    const response = await request(app)
+      .delete("/delete")
+      .send({ name: "Jukka" });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe("Failed to write data file.");
+  });
+});
+describe("PUT /update", () => {
+  beforeEach(async () => {
+    await fs.promises.writeFile(dataFilePath, JSON.stringify([]));
+  });
+
+  it("should update a todo for an existing user", async () => {
+    const initialData = [{ name: "Jukka", todos: ["Eat", "Sleep"] }];
+    await fs.promises.writeFile(dataFilePath, JSON.stringify(initialData));
+
+    const response = await request(app)
+      .put("/update")
+      .send({ name: "Jukka", todo: "Sleep" });
+
+    const users = JSON.parse(await fs.promises.readFile(dataFilePath, "utf-8"));
+    expect(response.status).toBe(200);
+    expect(response.text).toBe("Todo deleted successfully.");
+    expect(users).toEqual([{ name: "Jukka", todos: ["Eat"] }]);
+  });
+
+  it("should return 404 if the user is not found", async () => {
+    const response = await request(app)
+      .put("/update")
+      .send({ name: "NonExistentUser", todo: "Sleep" });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe("User not found");
+  });
+
+  it("should return 400 if the todo is not found", async () => {
+    const initialData = [{ name: "Jukka", todos: ["Eat"] }];
+    await fs.promises.writeFile(dataFilePath, JSON.stringify(initialData));
+
+    const response = await request(app)
+      .put("/update")
+      .send({ name: "Jukka", todo: "Sleep" });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe("Todo not found.");
   });
 });

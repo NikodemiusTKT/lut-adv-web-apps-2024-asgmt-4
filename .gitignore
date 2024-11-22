@@ -131,3 +131,5 @@ dist
 
 # ignore data.json
 data.json
+.pytest_cache/
+coverage/

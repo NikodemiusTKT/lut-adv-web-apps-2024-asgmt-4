@@ -25,25 +25,32 @@ class BadRequestError extends Error {
     this.name = "BadRequestError";
   }
 }
-
+class WriteDataFileError extends Error {
+  constructor(message: string = "Failed to write data file.") {
+    super(message);
+    this.name = "WriteDataFileError";
+  }
+}
 function errorHandler(
-  error: Error,
+  error: any,
   req: Request,
   res: Response,
   next: NextFunction
 ): void {
   console.error(error);
+
   if (error instanceof UserNotFoundError) {
     res.status(404).send(error.message);
   } else if (error instanceof BadRequestError) {
     res.status(400).send(error.message);
+  } else if (error instanceof WriteDataFileError) {
+    res.status(500).send(error.message);
   } else if (error instanceof Error) {
     res.status(500).send(error.message);
   } else {
     res.status(500).send("Unknown error occurred.");
   }
 }
-
 function asyncHandler(
   fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
 ): (req: Request, res: Response, next: NextFunction) => void {
@@ -86,11 +93,7 @@ async function createDataFile(filepath: string): Promise<void> {
   try {
     await fs.promises.writeFile(filepath, JSON.stringify([]));
     console.log(`File ${filepath} created with initial data: []`);
-  } catch (writeError) {
-    const errorMessage = `Failed to create file ${filepath}. Error: ${
-      (writeError as Error).message
-    }`;
-    console.error(errorMessage);
+  } catch (error: unknown) {
     throw new Error("Failed to create data file.");
   }
 }
@@ -100,9 +103,6 @@ async function readDataFile(filepath: string = dataFilePath): Promise<TUser[]> {
     const data = await fs.promises.readFile(filepath, "utf-8");
     return JSON.parse(data);
   } catch (error: unknown) {
-    console.error(
-      `Failed to read file ${filepath}. Error: ${(error as Error).message}`
-    );
     throw new Error("Failed to read data file.");
   }
 }
@@ -112,13 +112,10 @@ async function writeDataFile(
   data: TUser[]
 ): Promise<void> {
   try {
-    await fs.promises.writeFile(filepath, JSON.stringify(data, null, 2));
+    await fs.promises.writeFile(filepath, JSON.stringify(data));
     console.log(`File ${filepath} has been updated successfully.`);
   } catch (error: unknown) {
-    console.error(
-      `Failed to write to file ${filepath}. Error: ${(error as Error).message}`
-    );
-    throw new Error("Failed to write to data file.");
+    throw new WriteDataFileError();
   }
 }
 
@@ -161,8 +158,12 @@ router.delete(
   "/delete",
   asyncHandler(async (req: Request, res: Response) => {
     const { name }: { name: string } = req.body;
+    if (!name) {
+      throw new BadRequestError("Name is required.");
+    }
+    const decodedName = decodeURIComponent(name);
     let users = await readDataFile(dataFilePath);
-    const userIndex = users.findIndex((user) => user.name === name);
+    const userIndex = users.findIndex((user) => user.name === decodedName);
     if (userIndex !== -1) {
       users.splice(userIndex, 1);
       await writeDataFile(dataFilePath, users);

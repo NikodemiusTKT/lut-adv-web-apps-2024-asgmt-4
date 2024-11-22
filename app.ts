@@ -1,9 +1,4 @@
-import {
-  dataFilePath,
-  errorHandler,
-  initializeDataFile,
-  router,
-} from "./src/server";
+import { dataFilePath, errorHandler, initializeDataFile, router } from "./src";
 import express, { Express } from "express";
 
 import morgan from "morgan";
