@@ -1,4 +1,9 @@
-import { dataFilePath, initializeDataFile, router } from "./src/server";
+import {
+  dataFilePath,
+  errorHandler,
+  initializeDataFile,
+  router,
+} from "./src/server";
 import express, { Express } from "express";
 
 import morgan from "morgan";
@@ -13,6 +18,7 @@ app.use(morgan("dev"));
 
 app.use(express.static(path.join(__dirname, "../public")));
 app.use("/", router);
+app.use(errorHandler);
 
 let server: any;
 

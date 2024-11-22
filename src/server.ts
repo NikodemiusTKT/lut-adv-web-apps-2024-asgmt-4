@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 
 import fs from "fs";
 import path from "path";
@@ -11,6 +11,46 @@ type TUser = {
 };
 
 const dataFilePath = path.resolve(__dirname, "../../data.json");
+
+class UserNotFoundError extends Error {
+  constructor(message: string = "User not found") {
+    super(message);
+    this.name = "UserNotFoundError";
+  }
+}
+
+class BadRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BadRequestError";
+  }
+}
+
+function errorHandler(
+  error: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  console.error(error);
+  if (error instanceof UserNotFoundError) {
+    res.status(404).send(error.message);
+  } else if (error instanceof BadRequestError) {
+    res.status(400).send(error.message);
+  } else if (error instanceof Error) {
+    res.status(500).send(error.message);
+  } else {
+    res.status(500).send("Unknown error occurred.");
+  }
+}
+
+function asyncHandler(
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
+): (req: Request, res: Response, next: NextFunction) => void {
+  return function (req: Request, res: Response, next: NextFunction): void {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
 
 async function initializeDataFile(filepath: string): Promise<void> {
   try {
@@ -38,10 +78,6 @@ async function handleFileAccessError(
     console.log(`File ${filepath} does not exist. Creating new file.`);
     await createDataFile(filepath);
   } else {
-    const errorMessage = `File ${filepath} is not accessible. Error: ${
-      (error as Error).message
-    }`;
-    console.error(errorMessage);
     throw new Error("Failed to access data file.");
   }
 }
@@ -86,62 +122,57 @@ async function writeDataFile(
   }
 }
 
-router.post("/add", async (req: Request, res: Response) => {
-  const { name, todo }: { name: string; todo: string } = req.body;
-  try {
+router.post(
+  "/add",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { name, todo }: { name: string; todo: string } = req.body;
+    const decodedName = decodeURIComponent(name);
+    const decodedTodo = decodeURIComponent(todo);
     const users = await readDataFile(dataFilePath);
-    let user: TUser | undefined = users.find((user) => user.name === name);
+    let user: TUser | undefined = users.find(
+      (user) => user.name === decodedName
+    );
     if (user) {
-      user.todos.push(todo);
+      user.todos.push(decodedTodo);
     } else {
-      user = { name, todos: [todo] };
+      user = { name: decodedName, todos: [decodedTodo] };
       users.push(user);
     }
     await writeDataFile(dataFilePath, users);
     res.send(`Todo added successfully for user ${name}.`);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      res.status(500).send(`Error: ${error.message}`);
-    } else {
-      res.status(500).send("Unknown error occurred.");
-    }
-  }
-});
+  })
+);
 
-router.get("/todos/:name", async (req: Request, res: Response) => {
-  const { name } = req.params;
-  try {
+router.get(
+  "/todos/:id",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const decodedId = decodeURIComponent(id);
     const users = await readDataFile(dataFilePath);
-    const user = users.find((user) => user.name === name);
+    const user = users.find((user) => user.name === decodedId);
     if (user) {
       res.json(user.todos);
     } else {
-      res.status(404).send("User not found");
+      throw new UserNotFoundError();
     }
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred.";
-    res.status(500).send(`Error: ${errorMessage}`);
-  }
-});
+  })
+);
 
-router.delete("/delete", async (req: Request, res: Response) => {
-  const { name }: { name: string } = req.body;
-  try {
+router.delete(
+  "/delete",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { name }: { name: string } = req.body;
+    const decodedName = decodeURIComponent(name);
     let users = await readDataFile(dataFilePath);
-    const userIndex = users.findIndex((user) => user.name === name);
+    const userIndex = users.findIndex((user) => user.name === decodedName);
     if (userIndex !== -1) {
       users.splice(userIndex, 1);
       await writeDataFile(dataFilePath, users);
       res.send("User deleted successfully.");
     } else {
-      res.status(404).send("User not found");
+      throw new UserNotFoundError();
     }
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred.";
-    res.status(500).send(`Error: ${errorMessage}`);
-  }
-});
+  })
+);
 
-export { router, initializeDataFile, dataFilePath };
+export { router, initializeDataFile, dataFilePath, errorHandler };

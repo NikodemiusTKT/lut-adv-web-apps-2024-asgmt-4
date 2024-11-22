@@ -2,105 +2,141 @@ document.addEventListener("DOMContentLoaded", function () {
   init();
 });
 
+let currentUser = null;
+
+function handleError(error, displayFunction) {
+  const errorMessage = error instanceof Error ? error.message : error;
+  displayFunction(errorMessage);
+}
+
 function init() {
   const todoForm = document.getElementById("todoForm");
   const searchForm = document.getElementById("searchForm");
-  todoForm.addEventListener("submit", handleFormSubmit);
+  todoForm.addEventListener("submit", handleAddTodos);
   searchForm.addEventListener("submit", handleSearchTodos);
   document
     .getElementById("deleteUser")
     .addEventListener("click", handleDeleteUser);
 }
+async function apiRequest(url, options) {
+  try {
+    const response = await fetch(url, options);
+    const contentType = response.headers.get("content-type");
+    let result;
+    if (contentType && contentType.includes("application/json")) {
+      result = await response.json();
+    } else {
+      result = await response.text();
+    }
+    if (response.ok) {
+      return { success: true, data: result };
+    } else {
+      return { success: false, message: result.message || result };
+    }
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+}
 
-async function handleFormSubmit(event) {
+async function handleAddTodos(event) {
   event.preventDefault();
 
   const userInput = document.getElementById("userInput").value.trim();
-  const todoInput = document.getElementById("todoInput").value.trim();
+  const todoInput = document.getElementById("todoInput").value;
 
   if (!userInput || !todoInput) {
-    displayMessage("Both fields are required.", "red lighten-4");
+    displayErrorMsg("User and Todo are required.");
     return;
   }
 
-  try {
-    const response = await addTodo(userInput, todoInput);
-    const result = await response.text();
-    if (response.ok) {
-      displayMessage(result, "teal lighten-4");
-      const todos = await fetchTodos(userInput);
-      displayTodos(todos.data);
-      showCurrentUserSection(userInput);
-    } else {
-      displayMessage(`Error: ${result}`, "red lighten-4");
-    }
-    clearInputFields(["userInput", "todoInput"]);
-  } catch (error) {
-    displayMessage(`Error: ${error.message}`, "red lighten-4");
+  const result = await addTodo(userInput, todoInput);
+
+  if (result.success) {
+    displaySuccessMessage(result.data);
+    currentUser = userInput;
+    await fetchAndDisplayTodos(userInput);
+    showCurrentUserSection(userInput);
+  } else {
+    handleError(result.message, displayErrorMsg);
   }
+  clearInputFields(["todoInput"]);
 }
 
 async function handleSearchTodos(event) {
   event.preventDefault();
 
-  const userInput = document.getElementById("searchInput").value.trim();
+  const searchInput = document.getElementById("searchInput").value.trim();
 
   if (!userInput) {
-    displayMessage("User is required.", "red lighten-4");
+    displayErrorMsg("User is required.");
     return;
   }
 
-  await updateTodoList(userInput);
+  currentUser = searchInput;
+  document.getElementById("userInput").value = currentUser;
+  const result = await fetchAndDisplayTodos(currentUser);
+  if (result.success) {
+    displaySuccessMessage(`Todos fetched successfully for ${currentUser}.`);
+  }
   clearInputFields(["searchInput"]);
 }
-
+async function handleDeleteUser() {
+  if (!currentUser) {
+    displayErrorMsg("No user selected.");
+    return;
+  }
+  const result = await apiRequest("/delete", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: encodeURIComponent(currentUser) }),
+  });
+  if (result.success) {
+    displaySuccessMessage(result.data);
+    document.getElementById("todoList").innerHTML = ""; // Clear the todo list
+    hideCurrentUserSection();
+  } else {
+    handleError(result.message, displayErrorMsg);
+  }
+}
 async function addTodo(user, todo) {
-  return fetch("/add", {
+  return apiRequest("/add", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ name: user, todo: todo }),
+    body: JSON.stringify({
+      name: encodeURIComponent(user),
+      todo: encodeURIComponent(todo),
+    }),
   });
 }
 
 async function fetchTodos(user) {
-  try {
-    const response = await fetch(`/todos/${user}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      return { success: true, data: result };
-    } else {
-      const result = await response.text();
-      return { success: false, message: result };
-    }
-  } catch (error) {
-    return {
-      success: false,
-      message: `Unable to fetch todos: ${error.message}`,
-    };
-  }
+  const result = await apiRequest(`/todos/${encodeURIComponent(user)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return result;
 }
 
-async function updateTodoList(user) {
+async function fetchAndDisplayTodos(user) {
   const result = await fetchTodos(user);
   if (result.success) {
-    displayMessage(`Todos found for user ${user}`, "teal lighten-4");
-    displayTodos(result.data);
+    renderTodos(result.data);
     showCurrentUserSection(user);
   } else {
-    displayMessage(result.message, "red lighten-4");
+    displayErrorMsg(result.message);
+    document.getElementById("todoList").innerHTML = ""; // Clear the todo list
     hideCurrentUserSection();
   }
+  return result;
 }
 
-function appendTodoItem(todo) {
+function renderTodoItem(todo) {
   const todoList = document.getElementById("todoList");
   const newTodoItem = document.createElement("li");
   const span = document.createElement("span");
@@ -113,10 +149,10 @@ function appendTodoItem(todo) {
   todoList.appendChild(newTodoItem);
 }
 
-function displayTodos(todos) {
+function renderTodos(todos) {
   const todoList = document.getElementById("todoList");
   todoList.innerHTML = ""; // Clear previous results
-  todos.forEach((todo) => appendTodoItem(todo));
+  todos.forEach((todo) => renderTodoItem(todo));
 }
 
 function displayMessage(message, colorClass) {
@@ -131,37 +167,26 @@ function clearInputFields(fieldIds) {
     document.getElementById(id).value = "";
   });
 }
-async function handleDeleteUser() {
-  const user = document.getElementById("currentUser").innerText;
-  try {
-    const response = await fetch("/delete", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name: user }),
-    });
 
-    const result = await response.text();
-    if (response.ok) {
-      displayMessage(result, "teal lighten-4");
-      hideCurrentUserSection();
-      document.getElementById("todoList").innerHTML = ""; // Clear the todo list
-    } else {
-      displayMessage(`${result}`, "red lighten-4");
-    }
-  } catch (error) {
-    displayMessage(`Error: ${error.message}`, "red lighten-4");
-  }
-}
 function showCurrentUserSection(user) {
+  console.log(user);
+  currentUser = user; // Save the current user
   const currentUserSection = document.getElementById("currentUserSection");
-  const currentUser = document.getElementById("currentUser");
-  currentUser.innerText = user;
+  const currentUserElement = document.getElementById("currentUserElement");
+  currentUserElement.innerText = user;
   currentUserSection.hidden = false;
 }
 
 function hideCurrentUserSection() {
+  currentUser = ""; // Clear the current user
   const currentUserSection = document.getElementById("currentUserSection");
   currentUserSection.hidden = true;
+}
+
+function displayErrorMsg(message) {
+  displayMessage(message, "red lighten-4");
+}
+
+function displaySuccessMessage(message) {
+  displayMessage(message, "teal lighten-4");
 }
