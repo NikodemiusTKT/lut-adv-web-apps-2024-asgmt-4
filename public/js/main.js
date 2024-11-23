@@ -25,14 +25,12 @@ const init = () => {
 const apiRequest = async (url, options) => {
   try {
     const response = await fetch(url, options);
-    const contentType = response.headers.get("content-type");
-    const result =
-      contentType && contentType.includes("application/json")
-        ? await response.json()
-        : await response.text();
-    return response.ok
-      ? { success: true, data: result }
-      : { success: false, message: result.message || result };
+    const result = await response.json();
+    if (response.ok) {
+      return { success: true, data: result };
+    } else {
+      return { success: false, message: result };
+    }
   } catch (error) {
     return { success: false, message: error.message };
   }
