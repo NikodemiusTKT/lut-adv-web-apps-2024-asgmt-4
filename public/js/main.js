@@ -26,10 +26,11 @@ const apiRequest = async (url, options) => {
   try {
     const response = await fetch(url, options);
     const result = await response.json();
+    const { success, message, data } = result;
     if (response.ok) {
-      return { success: true, data: result };
+      return { success: true, data: data, message: message };
     } else {
-      return { success: false, message: result };
+      return { success: false, message: message };
     }
   } catch (error) {
     return { success: false, message: error.message };
@@ -48,11 +49,13 @@ const handleAddTodos = async (event) => {
 
   const result = await addTodo(userInput, todoInput);
   if (result.success) {
-    displaySuccessMessage(result.data);
+    displaySuccessMessage(result.message);
     currentUser = userInput;
-    await fetchAndDisplayTodos(currentUser);
+    renderTodos(result.data);
+    showCurrentUserSection(userInput);
   } else {
     handleError(result.message, displayErrorMsg);
+    hideCurrentUserSection();
   }
   clearInputFields(["todoInput"]);
 };
@@ -69,7 +72,11 @@ const handleSearchTodos = async (event) => {
   currentUser = searchInput;
   document.getElementById("userInput").value = currentUser;
   const result = await fetchAndDisplayTodos(currentUser);
-  if (result) displaySuccessMessage("User found.");
+  if (result.success) {
+    displaySuccessMessage(result.message);
+  } else {
+    displayErrorMsg(result.message);
+  }
   clearInputFields(["searchInput"]);
 };
 
@@ -80,7 +87,7 @@ const handleDeleteUser = async () => {
   }
   const result = await deleteUser(currentUser);
   if (result.success) {
-    displaySuccessMessage(result.data);
+    displaySuccessMessage(result.message);
     document.getElementById("todoList").innerHTML = "";
     hideCurrentUserSection();
   } else {
@@ -98,14 +105,14 @@ const addTodo = (user, todo) =>
     }),
   });
 
-const fetchTodos = (user) =>
-  apiRequest(`/todos/${user}`, {
+const fetchTodos = async (user) =>
+  await apiRequest(`/todos/${user}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
 
-const deleteUser = (user) =>
-  apiRequest("/delete", {
+const deleteUser = async (user) =>
+  await apiRequest("/delete", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: user }),
@@ -116,13 +123,12 @@ const fetchAndDisplayTodos = async (user) => {
   if (result.success) {
     renderTodos(result.data);
     showCurrentUserSection(user);
-    return true;
   } else {
     handleError(result.message, displayErrorMsg);
     document.getElementById("todoList").innerHTML = "";
     hideCurrentUserSection();
-    return false;
   }
+  return result;
 };
 
 const handleDeleteTodo = async (event) => {
@@ -137,8 +143,8 @@ const handleDeleteTodo = async (event) => {
   });
 
   if (result.success) {
-    displaySuccessMessage(result.data);
-    event.target.closest("li").remove();
+    displaySuccessMessage(result.message);
+    renderTodos(result.data);
   } else {
     handleError(result.message, displayErrorMsg);
   }
@@ -182,5 +188,6 @@ const hideCurrentUserSection = () => {
 };
 
 const displayErrorMsg = (message) => displayMessage(message, "red lighten-4");
-const displaySuccessMessage = (message) =>
+const displaySuccessMessage = (message) => {
   displayMessage(message, "teal lighten-4");
+};

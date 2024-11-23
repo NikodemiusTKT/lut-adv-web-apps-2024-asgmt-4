@@ -38,17 +38,28 @@ function errorHandler(
   next: NextFunction
 ): void {
   console.error(error);
-
   if (error instanceof UserNotFoundError) {
-    res.status(404).json(error.message);
+    res
+      .status(404)
+      .json({ status: "error", message: error.message, data: null });
   } else if (error instanceof BadRequestError) {
-    res.status(400).json(error.message);
+    res
+      .status(400)
+      .json({ status: "error", message: error.message, data: null });
   } else if (error instanceof WriteDataFileError) {
-    res.status(500).json(error.message);
+    res
+      .status(500)
+      .json({ status: "error", message: error.message, data: null });
   } else if (error instanceof Error) {
-    res.status(500).json(error.message);
+    res
+      .status(500)
+      .json({ status: "error", message: error.message, data: null });
   } else {
-    res.status(500).json("Unknown error occurred.");
+    res.status(500).json({
+      status: "error",
+      message: "Unknown error occurred.",
+      data: null,
+    });
   }
 }
 function asyncHandler(
@@ -129,9 +140,13 @@ router.get(
     const users = await readDataFile(dataFilePath);
     const user = users.find((user) => user.name === name);
     if (user) {
-      res.json(user.todos);
+      res.json({
+        status: "success",
+        message: "Todos successfully fetched for user.",
+        data: user.todos,
+      });
     } else {
-      res.status(404).json("User not found");
+      throw new UserNotFoundError();
     }
   })
 );
@@ -148,7 +163,11 @@ router.post(
       users.push(user);
     }
     await writeDataFile(dataFilePath, users);
-    res.json(`Todo added successfully for user ${name}.`);
+    res.json({
+      status: "success",
+      message: `Todo added successfully for user ${name}.`,
+      data: user.todos,
+    });
   })
 );
 
@@ -165,7 +184,11 @@ router.delete(
     if (userIndex !== -1) {
       users.splice(userIndex, 1);
       await writeDataFile(dataFilePath, users);
-      res.json("User deleted successfully.");
+      res.status(200).json({
+        message: "User deleted successfully.",
+        status: "success",
+        data: null,
+      });
     } else {
       throw new UserNotFoundError();
     }
@@ -185,7 +208,11 @@ router.put(
       if (todoIndex !== -1) {
         user.todos.splice(todoIndex, 1);
         await writeDataFile(dataFilePath, users);
-        res.json("Todo deleted successfully.");
+        res.json({
+          message: "Todo deleted successfully.",
+          status: "success",
+          data: user.todos,
+        });
       } else {
         throw new BadRequestError("Todo not found.");
       }
