@@ -5,114 +5,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Todo List</title>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-  <!-- Compiled and minified CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
-
-  <!-- Compiled and minified JavaScript -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
-  <link rel="stylesheet" type="text/css" href="index.css" />
 </head>
 
 <body>
+  <h1>Todo List</h1>
 
-  <div class="container">
-    <section class="section">
-      <div class="row valign-wrapper align-center">
-        <div class="col s12">
-          <div id="responseMessage" class="card-panel teal lighten-4 center-align" hidden>
-            <!-- Response message will be displayed here -->
-          </div>
-        </div>
-      </div>
-    </section>
-    <!-- Current user and delete button section -->
-    <section id="currentUserSection" class="section" hidden>
-      <div class="row">
-        <div class="col s12">
-          <h5 id="currentUserElement" class="center-align">Current User:</h5>
-        </div>
-      </div>
-      <div class="row center-align">
-        <div class="col s12">
-          <button id="deleteUser" class="btn red waves-effect waves-light">
-            Delete User
-            <i class="material-icons right">delete</i>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Search todo section -->
-    <section>
-      <div class="row">
-        <div class="col s12">
-          <form id="searchForm">
-            <div class="row valign-wrapper">
-              <div class="input-field col s10">
-                <i class="material-icons prefix">search</i>
-                <input id="searchInput" type="text" />
-                <label for="searchInput">Search User Todos</label>
-              </div>
-              <div class="input-field col s2">
-                <button class="btn waves-effect waves-light" type="submit" id="search">
-                  Search
-                  <i class="material-icons right">search</i>
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </section>
-    <!-- Add todo section -->
-    <section>
-      <div class="row">
-        <div class="col s12">
-          <form id="todoForm">
-            <div class="row valign-wrapper">
-              <div class="input-field col s5">
-                <i class="material-icons prefix">account_circle</i>
-                <input id="userInput" type="text" class="validate" />
-                <label for="userInput">Your Name</label>
-              </div>
-              <div class="input-field col s5">
-                <i class="material-icons prefix">task_alt</i>
-                <input id="todoInput" type="text" class="validate" />
-                <label for="todoInput">Your Todo</label>
-              </div>
-              <div class="col s2">
-                <button class="btn waves-effect waves-light" type="submit" id="submit-data">
-                  Add Todo
-                  <i class="material-icons right">add_task</i>
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="row">
-        <div class="col s12">
-          <ul id="todoList" class="collection">
-            <!-- Todo items will be appended here -->
-          </ul>
-        </div>
-      </div>
-    </section>
-
-
-    <footer class="page-footer">
-      <div class="container">
-        <div class="row">
-          <div class="col s12 center-align">© 2024 Copyright</div>
-        </div>
-      </div>
-    </footer>
+  <div>
+    <div id="responseMessage" hidden>
+      <!-- Response message will be displayed here -->
+    </div>
   </div>
+
+  <!-- Current user and delete button section -->
+  <div id="currentUserSection" hidden>
+    <h5 id="currentUserElement">Current User:</h5>
+    <button id="deleteUser">Delete User</button>
+  </div>
+
+  <!-- Search todo section -->
+  <div>
+    <form id="searchForm">
+      <label for="searchInput">Search User Todos</label>
+      <input id="searchInput" type="text" />
+      <button type="submit" id="search">Search</button>
+    </form>
+  </div>
+
+  <!-- Add todo section -->
+  <div>
+    <form id="todoForm">
+      <label for="userInput">Your Name</label>
+      <input id="userInput" type="text" />
+      <label for="todoInput">Your Todo</label>
+      <input id="todoInput" type="text" />
+      <button type="submit" id="submit-data">Add Todo</button>
+    </form>
+  </div>
+
+  <div>
+    <ul id="todoList">
+      <!-- Todo items will be appended here -->
+    </ul>
+  </div>
+
+  <footer>
+    <p>© 2024 Copyright</p>
+  </footer>
 
   <script src="js/main.js"></script>
 </body>
