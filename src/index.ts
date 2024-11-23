@@ -112,7 +112,11 @@ async function writeDataFile(
   data: TUser[]
 ): Promise<void> {
   try {
-    await fs.promises.writeFile(filepath, JSON.stringify(data));
+    await fs.promises.writeFile(
+      filepath,
+      JSON.stringify(data, null, 2),
+      "utf-8"
+    );
     console.log(`File ${filepath} has been updated successfully.`);
   } catch (error: unknown) {
     throw new WriteDataFileError();
@@ -121,18 +125,9 @@ async function writeDataFile(
 router.get(
   "/todos/:name",
   asyncHandler(async (req: Request, res: Response) => {
-<<<<<<< HEAD
-    const { id } = req.params;
-    const data = await fs.promises.readFile(dataFilePath, "utf-8");
-    const users: TUser[] = JSON.parse(data);
-    const user = users.find(
-      (user) => user.name.toLowerCase() === id.toLowerCase()
-    );
-=======
     const { name } = req.params;
     const users = await readDataFile(dataFilePath);
     const user = users.find((user) => user.name === name);
->>>>>>> parent of f773774 (refactor(index.ts): update parameter name for fetching user todos)
     if (user) {
       res.send(user.todos);
     } else {
